@@ -1,0 +1,98 @@
+--@name music visualisation poly
+--@author ketsushi
+--@client
+
+    local url = {
+        --1
+        "url",
+        --2
+        "url",
+        --3
+        "url"
+    }
+    
+    local poly, poly2 = {}, {}
+    
+    local smooth = {}
+    
+    --changable
+    
+    local polygon = 30
+    
+    local lerp = 7
+    
+    local boost = 1000
+    
+    local boost2 = 500
+    
+    --changable
+    
+    for i = 1, polygon do
+        smooth[i] = 0
+    end 
+    
+    function plays(url)
+    
+    bass.loadURL(url[2],"3d",function(basS)
+        if basS then
+            snd = basS
+            snd:setVolume(10)
+            pcall(snd.setLooping, snd, true)
+        end
+        
+        if isValid(snd) then
+            
+            hook.add("render","visual",function()
+            
+                snd:setPos(render.getScreenEntity():getPos())
+            
+                local fft = snd:getFFT(6)
+                
+                for i=1, polygon do
+                    smooth[i] = math.lerp(timer.frametime()*lerp,smooth[i] or 0,fft[i] or 0)
+                    local theta = i*math.pi/(polygon/2)
+                    poly[i] = {x=math.cos(theta)*(50+smooth[i]*boost or 0)+256, y=math.sin(theta)*(50+smooth[i]*boost or 0)+256}
+                    poly2[i] = {x=math.cos(theta)*(40+smooth[i]*boost2 or 0)+256, y=math.sin(theta)*(40+smooth[i]*boost2 or 0)+256}
+                end
+                
+                render.drawPoly(poly)
+                render.setColor(Color(0,0,0))
+                render.drawPoly(poly2)
+                
+            end)
+            
+        end
+    end)
+    
+    end
+
+    --permission code
+    if not hasPermission("bass.loadURL") then
+    
+        local font = render.createFont("default",40)
+        
+        hook.add("render","error",function()
+         
+            render.setFont(font)
+            render.drawText(150,256,"press E the screen")
+            
+        end)
+    end
+    
+    setupPermissionRequest({"bass.loadURL"}, "give me your perm", true)
+    
+    hook.add("permissionrequest", "permission", function()
+    
+        if url and hasPermission("bass.loadURL", url) then
+        
+            hook.add("render","error",function()
+            end)
+            
+            hook.remove("render","remover")
+            
+            plays(url)
+            
+        end
+        
+    end)
+    --permission code
