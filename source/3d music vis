@@ -1,0 +1,94 @@
+--@name 3d music vis
+--@author ketsushi
+--@client
+
+local url = {
+    --1
+    "url"
+}
+
+function loadScript()
+
+    local data = {}
+    
+    local smooth = {}
+    
+    local b = 1000
+    
+    for i = 1 , 52 do
+        smooth[i] = 0
+    end
+
+    bass.loadURL( url[3], "3d", function(snd) 
+    
+        if snd then
+    
+            global = snd
+            
+            global:setVolume(5)
+            
+            pcall(global.setLooping, snd, true) 
+            
+            fftVisualisation()
+            
+        end
+    
+    end)
+
+    function fftVisualisation()
+    
+        if isValid( global ) then
+
+            hook.add( "render", "draw", function() 
+            
+                global:setPos(render.getScreenEntity():getPos())
+            
+                render.setColor( Color(255, 0, 0) )
+            
+                render.draw3DWireframeBox( Vector(0), Angle(0), Vector(0), Vector(512,512,512) )
+                
+                data = global:getFFT(6)
+                
+                for i = 1, 52 do
+                    
+                    render.setColor( Color( 255, 255, 255, 0+smooth[i]*255 ) )
+                    
+                    smooth[i] = math.lerp( timer.frametime()*5, smooth[i] or 0, data[i] or 0 )
+                    
+                    render.draw3DWireframeBox( Vector(-10+i*10,512,256), Angle(0), Vector(0), Vector(3,-smooth[i]*b,3) )
+                        
+                end
+            
+            end)
+        
+        end
+    
+    end
+
+end
+
+if not hasPermission("bass.loadURL") then
+    
+    local font = render.createFont("default",40)
+        
+    hook.add("render","error",function()
+        
+            
+        render.setFont(font)
+        render.drawText(150,256,"press E the screen")
+            
+        
+    end)
+    
+end
+
+setupPermissionRequest({"bass.loadURL"}, "give me your perm", true)
+
+hook.add("permissionrequest", "permission", function()
+    if url and hasPermission("bass.loadURL", url) then
+        hook.add("render","error",function()
+        end)
+        hook.remove("render","remover")
+        loadScript(url)
+    end
+end)
