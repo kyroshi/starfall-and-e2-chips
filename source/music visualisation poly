@@ -74,7 +74,7 @@
         hook.add("render","error",function()
          
             render.setFont(font)
-            render.drawText(150,256,"press E the screen")
+            render.drawText(150,256,"press E on screen")
             
         end)
     end
